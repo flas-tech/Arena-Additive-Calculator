@@ -79,7 +79,27 @@
       grid-template-columns: repeat(2, minmax(0,1fr));
       gap: 10px;
     }
-    button {
+    .mode-toggle {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 3px;
+      background: #e5e7eb;
+      margin: 8px 0 12px;
+    }
+    .mode-toggle button {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode-toggle button.active {
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+    button[type="submit"] {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -95,18 +115,28 @@
       transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
       box-shadow: 0 4px 10px rgba(0, 112, 243, 0.28);
     }
-    button:hover {
+    button[type="submit"]:hover {
       background: #005ad1;
     }
-    button:active {
+    button[type="submit"]:active {
       transform: translateY(1px);
       box-shadow: 0 2px 6px rgba(0, 112, 243, 0.3);
     }
     .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: none;
       background: #e4e4e7;
       color: #111827;
-      box-shadow: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 8px;
       margin-left: 6px;
+      transition: background 0.15s ease;
     }
     .btn-secondary:hover {
       background: #d4d4d8;
@@ -118,9 +148,6 @@
     }
     .results {
       margin-top: 8px;
-    }
-    .results h3 {
-      margin-top: 0;
     }
     table {
       width: 100%;
@@ -160,19 +187,49 @@
         grid-template-columns: 1fr;
       }
     }
+    .pill-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .section-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 8px 0 4px;
+    }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      background: #e5e7eb;
+      padding: 2px 10px;
+      font-size: 0.78rem;
+      color: #374151;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
 <div class="app">
   <h1>Arena Dust Control Blend Calculator</h1>
   <p class="subheading">
-    Enter arena dimensions, footing type, and basic lab data. This tool suggests a customized blend
-    and exact component volumes for your arena. Formulas are heuristic and intended as R&amp;D starting points.
+    Enter arena dimensions, footing information, and either lab-style inputs or your
+    <strong>Arena Footing Test Kit</strong> results to generate a custom dust-control blend and container recommendations.
   </p>
 
   <div class="card">
     <form id="blendForm">
       <h2>Arena &amp; Footing Inputs</h2>
+
+      <div class="mode-toggle" role="radiogroup" aria-label="Input mode">
+        <button type="button" id="modeStandardBtn" class="active" data-mode="standard">Standard Mode</button>
+        <button type="button" id="modeKitBtn" data-mode="kit">Kit Mode (Test Kit)</button>
+      </div>
+
+      <input type="hidden" id="mode" value="standard">
+
       <div class="grid">
         <div>
           <div class="field inline-fields">
@@ -204,8 +261,8 @@
           </div>
         </div>
 
-        <div>
-          <h3>Lab / Field Test Inputs</h3>
+        <div id="standardInputs">
+          <h3>Standard Lab / Field Inputs</h3>
           <div class="field inline-fields">
             <div>
               <label for="avgParticleSize">Average particle size (µm)</label>
@@ -233,6 +290,77 @@
               <option value="low">Low (light historical use)</option>
               <option value="medium" selected>Medium (common previous use)</option>
               <option value="high">High (heavily salted)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="kitInputs" style="display:none;">
+          <h3>Kit Mode Inputs (from Arena Footing Test Kit)</h3>
+
+          <div class="section-label">
+            Test 1 – Sieve Weights <span class="pill">Use 100 g sample</span>
+          </div>
+          <div class="field inline-fields">
+            <div>
+              <label for="coarseWeight">Coarse sieve weight (g)</label>
+              <input type="number" id="coarseWeight" min="0" step="0.1" placeholder="e.g. 40">
+            </div>
+            <div>
+              <label for="mediumWeight">Medium sieve weight (g)</label>
+              <input type="number" id="mediumWeight" min="0" step="0.1" placeholder="e.g. 45">
+            </div>
+          </div>
+          <div class="field">
+            <label for="fineWeight">Fine / passing &lt;75µm (g)</label>
+            <input type="number" id="fineWeight" min="0" step="0.1" placeholder="e.g. 15">
+          </div>
+
+          <div class="section-label">
+            Test 2 – Shear / Drag Test
+          </div>
+          <div class="field inline-fields">
+            <div>
+              <label for="drag1">Pull force 1 (lb)</label>
+              <input type="number" id="drag1" min="0" step="0.1" placeholder="e.g. 8">
+            </div>
+            <div>
+              <label for="drag2">Pull force 2 (lb)</label>
+              <input type="number" id="drag2" min="0" step="0.1">
+            </div>
+          </div>
+          <div class="field">
+            <label for="drag3">Pull force 3 (lb)</label>
+            <input type="number" id="drag3" min="0" step="0.1">
+          </div>
+
+          <div class="section-label">
+            Test 3 – Compressibility / Depth
+          </div>
+          <div class="field inline-fields">
+            <div>
+              <label for="depth1">Sink depth 1 (in)</label>
+              <input type="number" id="depth1" min="0" step="0.1" placeholder="e.g. 1.2">
+            </div>
+            <div>
+              <label for="depth2">Sink depth 2 (in)</label>
+              <input type="number" id="depth2" min="0" step="0.1">
+            </div>
+          </div>
+          <div class="field">
+            <label for="depth3">Sink depth 3 (in)</label>
+            <input type="number" id="depth3" min="0" step="0.1">
+          </div>
+
+          <div class="section-label">
+            Test 4 – EC / Salt Level
+          </div>
+          <div class="field">
+            <label for="kitSaltBand">Salt level band (from strip color chart)</label>
+            <select id="kitSaltBand">
+              <option value="none">None / very low</option>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
             </select>
           </div>
         </div>
@@ -268,45 +396,51 @@
 
     <div class="note" id="doseNote"></div>
 
+    <h3>Container Recommendation <span class="badge">Auto-sized</span></h3>
+    <div class="note" id="containerRecommendation"></div>
+
     <h3>Technical Notes</h3>
     <div class="note" id="technicalNotes"></div>
+
+    <div class="note" id="kitDerivedBlock" style="display:none; margin-top:12px;">
+      <strong>Kit-derived internal values:</strong>
+      <div id="kitDerivedText"></div>
+    </div>
   </div>
 
   <div class="card">
     <h2>About the Model</h2>
     <p class="note">
       This calculator uses a simple heuristic model:
-      it estimates dust severity and footing sensitivity from footing type, % fines,
+      it estimates dust severity and footing sensitivity from footing type, fines,
       shear, compressibility, and salt history. It then:
     </p>
     <ul class="note">
-      <li>Sets a total fluid dose (gallons / ft²) in the range ~0.006–0.012 gal/ft².</li>
+      <li>Sets a total fluid dose (gallons / ft²) in the range ~0.006–0.013 gal/ft².</li>
       <li>Splits the dose between:
         <strong>Base Oil Blend</strong> (primary dust suppression),
         <strong>Conditioning Ester</strong> (flow / wetting),
         and optional <strong>Polymer Stabilizer</strong> (light binding for very loose, high-fines footing).</li>
-      <li>Outputs exact volumes for your arena dimensions and treatment depth.</li>
+      <li>Automatically recommends container sizes (5-gal pails, 30-gal drums,
+        55-gal drums, 275-gal totes) to slightly exceed your calculated total.</li>
     </ul>
     <p class="note">
-      All values are intended as development starting points only; adjust with real-world riding and lab feedback.
+      All values are intended as development starting points only; refine with real-world riding and lab feedback.
     </p>
   </div>
 </div>
 
 <script>
-  // Main calculation logic
-
   function clamp(value, min, max, fallback = null) {
     if (value === null || isNaN(value)) return fallback !== null ? fallback : min;
     return Math.min(max, Math.max(min, value));
   }
 
   function estimateDustSeverity(footingType, finesPercent, avgParticleSize) {
-    // Return a number in [1,3] (1 = low, 3 = high)
     let base;
     switch (footingType) {
       case "m10":
-        base = 3; // very fine, high dust potential
+        base = 3;
         break;
       case "washed_sand":
         base = 1.5;
@@ -329,30 +463,25 @@
     }
 
     if (!isNaN(avgParticleSize)) {
-      if (avgParticleSize < 150) base += 0.3;  // very fine
-      else if (avgParticleSize > 300) base -= 0.2; // coarser sand
+      if (avgParticleSize < 150) base += 0.3;
+      else if (avgParticleSize > 300) base -= 0.2;
     }
 
     return clamp(base, 1, 3);
   }
 
   function estimateFootingSensitivity(compressRating, shearRating) {
-    // Higher means more sensitive to over-stiffening (avoid polymer, heavy dosing)
-    // compressRating: 1=very firm, 10=very deep
-    // shearRating: 1=slick, 10=grippy
     let comp = clamp(compressRating, 1, 10, 5);
     let shear = clamp(shearRating, 1, 10, 5);
 
-    // Deep (high compress) footing is sensitive to extra "weight" and polymer.
     let sensitivity = 0;
-    sensitivity += (comp - 5) * 0.15; // deep -> positive
-    sensitivity -= (shear - 5) * 0.05; // very grippy can tolerate a bit more
+    sensitivity += (comp - 5) * 0.15;
+    sensitivity -= (shear - 5) * 0.05;
 
-    return clamp(1.5 + sensitivity, 1, 3); // 1=robust, 3=very sensitive
+    return clamp(1.5 + sensitivity, 1, 3);
   }
 
   function estimateSaltAdjustment(saltLevel) {
-    // Slightly reduce dose where salt is already present
     switch (saltLevel) {
       case "high": return -0.15;
       case "medium": return -0.07;
@@ -362,11 +491,8 @@
   }
 
   function calculateTotalDoseGalPerFt2(dustSeverity, sensitivity) {
-    // Base dose: 0.006–0.012 gal/ft²
-    // Higher dust severity → higher dose
     let baseDose = 0.006 + (dustSeverity - 1) * (0.006 / 2); // ~0.006, 0.009, 0.012
 
-    // More sensitive footing → slightly lower dose
     if (sensitivity > 2.2) {
       baseDose *= 0.9;
     } else if (sensitivity < 1.8) {
@@ -377,36 +503,28 @@
   }
 
   function calculateBlendRatios(footingType, dustSeverity, sensitivity) {
-    // Determine % for:
-    //  - Base Oil Blend
-    //  - Conditioning Ester
-    //  - Polymer Stabilizer
     let oil = 65;
     let ester = 25;
     let polymer = 10;
 
-    // For M10, we like a bit more oil and some polymer
     if (footingType === "m10") {
       oil = 70;
       ester = 20;
       polymer = 10;
     }
 
-    // High dust severity but low sensitivity: allow more polymer
     if (dustSeverity > 2.5 && sensitivity < 2) {
       polymer += 5;
       oil -= 2;
       ester -= 3;
     }
 
-    // Very sensitive, deep footing: back off polymer and reduce heaviness
     if (sensitivity > 2.4) {
       polymer = Math.max(0, polymer - 7);
       ester += 3;
       oil += 4;
     }
 
-    // Normalization
     const total = oil + ester + polymer;
     return {
       oil: (oil / total) * 100,
@@ -422,10 +540,161 @@
     });
   }
 
+  // Map Kit Mode readings to internal values
+  function deriveFromKitInputs() {
+    // Sieve
+    const coarse = parseFloat(document.getElementById("coarseWeight").value) || 0;
+    const medium = parseFloat(document.getElementById("mediumWeight").value) || 0;
+    const fine = parseFloat(document.getElementById("fineWeight").value) || 0;
+    const total = coarse + medium + fine;
+
+    let finesPercent = null;
+    let avgParticleSize = null;
+
+    if (total > 0) {
+      finesPercent = (fine / total) * 100;
+
+      // Crude weighted average particle size using rough band midpoints
+      const dCoarse = 1000; // microns (very rough)
+      const dMedium = 300;
+      const dFine = 50;
+
+      const avg =
+        (coarse * dCoarse + medium * dMedium + fine * dFine) / total;
+      avgParticleSize = avg;
+    }
+
+    // Shear: based on drag forces
+    const d1 = parseFloat(document.getElementById("drag1").value);
+    const d2 = parseFloat(document.getElementById("drag2").value);
+    const d3 = parseFloat(document.getElementById("drag3").value);
+    const dragVals = [d1, d2, d3].filter(v => !isNaN(v) && v > 0);
+    let shearRating = null;
+    let avgDrag = null;
+
+    if (dragVals.length > 0) {
+      avgDrag = dragVals.reduce((a, b) => a + b, 0) / dragVals.length;
+
+      // Map pull force (lb) to 1–10 rating
+      if (avgDrag < 5) shearRating = 2;
+      else if (avgDrag < 8) shearRating = 4;
+      else if (avgDrag < 12) shearRating = 6;
+      else if (avgDrag < 16) shearRating = 8;
+      else shearRating = 9;
+    }
+
+    // Compressibility: sink depth
+    const s1 = parseFloat(document.getElementById("depth1").value);
+    const s2 = parseFloat(document.getElementById("depth2").value);
+    const s3 = parseFloat(document.getElementById("depth3").value);
+    const depthVals = [s1, s2, s3].filter(v => !isNaN(v) && v >= 0);
+    let compressRating = null;
+    let avgDepth = null;
+
+    if (depthVals.length > 0) {
+      avgDepth = depthVals.reduce((a, b) => a + b, 0) / depthVals.length;
+
+      if (avgDepth < 0.5) compressRating = 2;
+      else if (avgDepth < 1.0) compressRating = 4;
+      else if (avgDepth < 1.5) compressRating = 6;
+      else if (avgDepth < 2.0) compressRating = 8;
+      else compressRating = 9;
+    }
+
+    const saltBand = document.getElementById("kitSaltBand").value;
+    let saltLevel = saltBand; // directly reuse mapping
+
+    return {
+      finesPercent,
+      avgParticleSize,
+      shearRating,
+      compressRating,
+      saltLevel,
+      avgDrag,
+      avgDepth
+    };
+  }
+
+  // Container recommendation
+  function recommendContainers(totalGallons) {
+    const containers = [
+      { name: "275-gal tote", size: 275 },
+      { name: "55-gal drum", size: 55 },
+      { name: "30-gal drum", size: 30 },
+      { name: "5-gal pail", size: 5 }
+    ];
+
+    // Brute force small search over counts to minimize overfill and container count
+    let best = null;
+
+    for (let c275 = 0; c275 <= 4; c275++) {
+      for (let c55 = 0; c55 <= 10; c55++) {
+        for (let c30 = 0; c30 <= 10; c30++) {
+          for (let c5 = 0; c5 <= 20; c5++) {
+            const volume =
+              c275 * 275 + c55 * 55 + c30 * 30 + c5 * 5;
+            if (volume <= 0) continue;
+            if (volume < totalGallons) continue;
+
+            const overfill = volume - totalGallons;
+            const count = c275 + c55 + c30 + c5;
+
+            if (
+              !best ||
+              overfill < best.overfill ||
+              (overfill === best.overfill && count < best.count)
+            ) {
+              best = {
+                overfill,
+                count,
+                totalVolume: volume,
+                c275,
+                c55,
+                c30,
+                c5
+              };
+            }
+          }
+        }
+      }
+    }
+
+    return best;
+  }
+
+  // Mode toggle
+  const modeInput = document.getElementById("mode");
+  const modeStandardBtn = document.getElementById("modeStandardBtn");
+  const modeKitBtn = document.getElementById("modeKitBtn");
+  const standardInputsDiv = document.getElementById("standardInputs");
+  const kitInputsDiv = document.getElementById("kitInputs");
+
+  function setMode(mode) {
+    modeInput.value = mode;
+    if (mode === "standard") {
+      standardInputsDiv.style.display = "block";
+      kitInputsDiv.style.display = "none";
+      modeStandardBtn.classList.add("active");
+      modeKitBtn.classList.remove("active");
+    } else {
+      standardInputsDiv.style.display = "none";
+      kitInputsDiv.style.display = "block";
+      modeStandardBtn.classList.remove("active");
+      modeKitBtn.classList.add("active");
+    }
+    // Hide kit-derived block by default until we calculate again
+    document.getElementById("kitDerivedBlock").style.display = "none";
+  }
+
+  modeStandardBtn.addEventListener("click", () => setMode("standard"));
+  modeKitBtn.addEventListener("click", () => setMode("kit"));
+
   document.getElementById("blendForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const errorDiv = document.getElementById("error");
     errorDiv.textContent = "";
+
+    const mode = modeInput.value || "standard";
 
     const lengthFt = parseFloat(document.getElementById("lengthFt").value);
     const widthFt = parseFloat(document.getElementById("widthFt").value);
@@ -437,12 +706,22 @@
       return;
     }
 
-    const avgParticleSize = parseFloat(document.getElementById("avgParticleSize").value);
-    const finesPercent = parseFloat(document.getElementById("finesPercent").value);
-    const shearRating = parseFloat(document.getElementById("shearRating").value);
-    const compressRating = parseFloat(document.getElementById("compressRating").value);
-    const saltLevel = document.getElementById("saltLevel").value;
-    const notes = document.getElementById("notes").value.trim();
+    let avgParticleSize = parseFloat(document.getElementById("avgParticleSize").value);
+    let finesPercent = parseFloat(document.getElementById("finesPercent").value);
+    let shearRating = parseFloat(document.getElementById("shearRating").value);
+    let compressRating = parseFloat(document.getElementById("compressRating").value);
+    let saltLevel = document.getElementById("saltLevel").value;
+
+    let kitDerived = null;
+
+    if (mode === "kit") {
+      kitDerived = deriveFromKitInputs();
+      avgParticleSize = kitDerived.avgParticleSize;
+      finesPercent = kitDerived.finesPercent;
+      shearRating = kitDerived.shearRating;
+      compressRating = kitDerived.compressRating;
+      saltLevel = kitDerived.saltLevel;
+    }
 
     // Geometry
     const areaFt2 = lengthFt * widthFt;
@@ -454,19 +733,15 @@
 
     let dosePerFt2 = calculateTotalDoseGalPerFt2(dustSeverity, sensitivity);
     dosePerFt2 *= (1 + saltAdj);
-
-    // Keep dose in a reasonable range
     dosePerFt2 = clamp(dosePerFt2, 0.005, 0.013);
 
     const totalGallons = dosePerFt2 * areaFt2;
 
     const ratios = calculateBlendRatios(footingType, dustSeverity, sensitivity);
-
     const oilGallons = totalGallons * (ratios.oil / 100);
     const esterGallons = totalGallons * (ratios.ester / 100);
     const polymerGallons = totalGallons * (ratios.polymer / 100);
 
-    // Summary text
     const summaryDiv = document.getElementById("summary");
     const footingLabel = document.querySelector("#footingType option:checked").textContent;
 
@@ -484,9 +759,9 @@
 
     summaryDiv.innerHTML = `
       <p>
+        <strong>Mode:</strong> ${mode === "kit" ? "Kit Mode (Arena Footing Test Kit)" : "Standard Mode"}<br/>
         <strong>Arena:</strong> ${formatNumber(lengthFt,1)} ft × ${formatNumber(widthFt,1)} ft
-        (${formatNumber(areaFt2,0)} ft²), treated depth ~${formatNumber(depthIn,1)} in.
-        <br/>
+        (${formatNumber(areaFt2,0)} ft²), treated depth ~${formatNumber(depthIn,1)} in.<br/>
         <strong>Footing:</strong> ${footingLabel}<br/>
         <strong>Estimated dust severity:</strong> ${dustLabel} (${dustSeverity.toFixed(2)})<br/>
         <strong>Footing sensitivity:</strong> ${sensitivityLabel} (${sensitivity.toFixed(2)})
@@ -541,14 +816,57 @@
       All doses are approximate and should be refined with field testing.
     `;
 
+    // Container recommendation
+    const containerDiv = document.getElementById("containerRecommendation");
+    const rec = recommendContainers(totalGallons);
+
+    if (rec) {
+      const lines = [];
+      if (rec.c275) lines.push(`${rec.c275} × 275-gal tote`);
+      if (rec.c55) lines.push(`${rec.c55} × 55-gal drum`);
+      if (rec.c30) lines.push(`${rec.c30} × 30-gal drum`);
+      if (rec.c5) lines.push(`${rec.c5} × 5-gal pail`);
+
+      const overPct = (rec.overfill / totalGallons) * 100;
+
+      containerDiv.innerHTML = `
+        Recommended container mix:<br/>
+        <strong>${lines.join(" + ")}</strong><br/>
+        Total shipped volume: ~${formatNumber(rec.totalVolume,1)} gal
+        (≈ ${formatNumber(rec.overfill,1)} gal over calculated need, ${formatNumber(overPct,1)}% margin).
+        <br/><br/>
+        This recommendation assumes a pre-blended fluid. If you ship components separately,
+        apply the same container plan proportionally to each component.
+      `;
+    } else {
+      containerDiv.textContent = "Unable to compute a suitable container combination. Please review the arena size and try again.";
+    }
+
     const techNotes = document.getElementById("technicalNotes");
+    const notes = document.getElementById("notes").value.trim();
     techNotes.innerHTML = `
-      • This blend is intended as a non-evaporating, hoof-safe dust control system tailored to your footing profile.<br/>
+      • This blend is intended as a non-evaporating, hoof-friendly dust control system tailored to your footing profile.<br/>
       • Higher fines and smaller particle sizes increase dust severity and push the model toward higher total dose and some polymer content.<br/>
       • Deep or highly compressible footing increases sensitivity, which reduces total dose and de-emphasizes polymer to avoid over-stiffening.<br/>
       • Existing salt (CaCl₂) slightly reduces the recommended dose; long-term, you can transition away from salts as you add fresh, treated footing.<br/>
       ${notes ? "• User notes: " + notes.replace(/\n/g, " ") : ""}
     `;
+
+    // Show kit-derived internal values if using kit mode
+    const kitBlock = document.getElementById("kitDerivedBlock");
+    const kitText = document.getElementById("kitDerivedText");
+    if (mode === "kit" && kitDerived) {
+      kitBlock.style.display = "block";
+      kitText.innerHTML = `
+        • Derived % fines &lt;75µm: ${kitDerived.finesPercent != null ? formatNumber(kitDerived.finesPercent,1) + "%" : "n/a"}<br/>
+        • Estimated average particle size: ${kitDerived.avgParticleSize != null ? formatNumber(kitDerived.avgParticleSize,0) + " µm" : "n/a"}<br/>
+        • Average drag force: ${kitDerived.avgDrag != null ? formatNumber(kitDerived.avgDrag,1) + " lb" : "n/a"} → shear rating ≈ ${kitDerived.shearRating != null ? kitDerived.shearRating : "n/a"}/10<br/>
+        • Average sink depth: ${kitDerived.avgDepth != null ? formatNumber(kitDerived.avgDepth,2) + " in" : "n/a"} → compressibility ≈ ${kitDerived.compressRating != null ? kitDerived.compressRating : "n/a"}/10<br/>
+        • Salt level band: ${kitDerived.saltLevel || "n/a"}
+      `;
+    } else {
+      kitBlock.style.display = "none";
+    }
 
     document.getElementById("resultsCard").style.display = "block";
     document.getElementById("resultsCard").scrollIntoView({ behavior: "smooth" });
@@ -558,7 +876,11 @@
     document.getElementById("blendForm").reset();
     document.getElementById("error").textContent = "";
     document.getElementById("resultsCard").style.display = "none";
+    setMode("standard");
   });
+
+  // Initialize mode
+  setMode("standard");
 </script>
 </body>
 </html>
